@@ -1,13 +1,20 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday, addMonths, subMonths, getDay } from 'date-fns';
 import { useApp } from '../context/AppContext';
 import { Card, Badge, Button, EmptyState } from '../components/UI';
 import TaskCard from '../components/TaskCard';
+import config from '../config';
+
+
 
 export default function Calendar() {
   const { colors, tasks, PRIORITY_COLORS } = useApp();
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedTasks, setSelectedTasks] = useState([]);
+  const [loadingTasks, setLoadingTasks] = useState(false);
+
+
 
   const days = useMemo(() => {
     const start = startOfMonth(currentMonth);
@@ -24,11 +31,44 @@ export default function Calendar() {
     return map;
   }, [tasks]);
 
+  // const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
+  // const selectedTasks = useMemo(() =>
+  //   (taskMap[selectedDateStr] || []).sort((a, b) => new Date(a.scheduledTime) - new Date(b.scheduledTime)),
+  //   [taskMap, selectedDateStr]
+  // );
+
+
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
-  const selectedTasks = useMemo(() =>
-    (taskMap[selectedDateStr] || []).sort((a, b) => new Date(a.scheduledTime) - new Date(b.scheduledTime)),
-    [taskMap, selectedDateStr]
-  );
+
+  useEffect(() => {
+    const fetchTasksForDate = async () => {
+      setLoadingTasks(true);
+      try {
+        const token = localStorage.getItem(config.auth.tokenKey);
+        const response = await fetch(`${config.api.baseURL}/tasks/by-date/${selectedDateStr}`, {
+          headers: { 'Authorization': `Bearer ${token}` },
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+
+          // Wait 500ms before showing results
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          setSelectedTasks(result.data.tasks.sort((a, b) => 
+            new Date(a.scheduledTime) - new Date(b.scheduledTime)
+          ));
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        setSelectedTasks([]);
+      } finally {
+        setLoadingTasks(false);
+      }
+    };
+    fetchTasksForDate();
+  }, [selectedDateStr]);
+
 
   const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const startDow = getDay(days[0]);
@@ -145,7 +185,20 @@ export default function Calendar() {
             <Badge color={colors.accent}>{selectedTasks.length} tasks</Badge>
           </div>
 
-          {selectedTasks.length === 0 ? (
+          {loadingTasks ? (
+              <Card style={{ padding: '40px', textAlign: 'center' }}>
+                <div style={{
+                  width: '40px',
+                  height: '40px',
+                  border: `3px solid ${colors.border}`,
+                  borderTop: `3px solid ${colors.accent}`,
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite',
+                  margin: '0 auto 12px',
+                }} />
+                <div style={{ fontSize: '13px', color: colors.textMuted }}>Loading tasks...</div>
+              </Card>
+            ) : selectedTasks.length === 0 ? (
             <Card>
               <EmptyState icon="◌" title="No tasks" subtitle="Nothing scheduled for this day" />
             </Card>
@@ -166,7 +219,7 @@ export default function Calendar() {
         @media (max-width: 430px) {
             .cal-container { padding: 16px !important; }
             .cal-grid { gap: 16px !important; }
-      }
+        }
       `}</style>
     </div>
   );
