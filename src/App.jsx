@@ -14,6 +14,9 @@ import Login from './pages/Login.jsx';
 import Signup from './pages/Signup.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import './index.css';
+import config from './config/index.js';
+
+console.log('config : ', config);
 
 export default function App() {
   return (
