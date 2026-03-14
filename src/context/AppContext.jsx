@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import config from '../config';
 
 const AppContext = createContext();
 
@@ -59,7 +60,8 @@ const PRIORITY_COLORS = {
 
 const CATEGORIES = ['Work', 'Personal', 'Health', 'Learning', 'Finance', 'Other'];
 
-const API_BASE = 'http://localhost:5000/api/v1';
+// const API_BASE = 'http://localhost:5000/api/v1';
+const API_BASE = config.api.baseURL
 
 const getToken = () => localStorage.getItem('chronicle-access-token');
 
