@@ -70,7 +70,7 @@ export default function Home() {
     <div style={{ padding: '32px', maxWidth: '1800px' }}>
       <PageHeader colors={colors}
         title={`Good ${now.getHours() < 12 ? 'morning' : now.getHours() < 17 ? 'afternoon' : 'evening'} ✦`}
-        subtitle={format(now, "EEEE, MMMM d, yyyy")}
+        subtitle={format(now, "EEEE, MMMM d, yyyy · HH:mm")}
       />
 
       {/* Stats Row */}
