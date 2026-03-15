@@ -52,7 +52,7 @@ export default function Calendar() {
         const result = await response.json();
 
         // Wait 500ms before showing results
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 200));
 
         setSelectedTasks(result.data.tasks.map(task => ({
           ...task,
