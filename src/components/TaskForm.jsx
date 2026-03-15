@@ -27,6 +27,7 @@ export default function TaskForm({ existing }) {
     notes: existing?.notes || '',
   });
   const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const set = (key, val) => setForm(f => ({ ...f, [key]: val }));
 
@@ -41,18 +42,25 @@ export default function TaskForm({ existing }) {
 
   const handleSubmit = async () => {
     if (!validate()) return;
-    const payload = {
-      title: form.title.trim(),
-      category: form.category,
-      priority: form.priority,
-      scheduledDate: form.scheduledDate,
-      scheduledTime: form.scheduledTime,
-      duration: parseInt(form.duration),
-      notes: form.notes.trim(),
-    };
-    if (existing) { await updateTask(existing.id, payload); }
-    else { await addTask(payload); }
-    navigate('/tasks');
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        title: form.title.trim(),
+        category: form.category,
+        priority: form.priority,
+        scheduledDate: form.scheduledDate,
+        scheduledTime: form.scheduledTime,
+        duration: parseInt(form.duration),
+        notes: form.notes.trim(),
+      };
+      if (existing) { await updateTask(existing.id, payload); }
+      else { await addTask(payload); }
+      navigate('/tasks');
+    } catch (error) {
+      console.error('Error submitting task:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const priorityOptions = ['low', 'medium', 'high'].map(p => ({ value: p, label: p.charAt(0).toUpperCase() + p.slice(1) }));
@@ -118,9 +126,16 @@ export default function TaskForm({ existing }) {
 
         {/* Actions */}
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '4px', borderTop: `1px solid ${colors.border}` }}>
-          <Button variant="secondary" onClick={() => navigate(-1)}>Cancel</Button>
-          <Button variant="primary" onClick={handleSubmit}>
-            {existing ? '✓ Save Changes' : '+ Add Task'}
+          <Button variant="secondary" onClick={() => navigate(-1)} disabled={isSubmitting}>Cancel</Button>
+          <Button variant="primary" onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? (
+              <>
+                <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite', marginRight: '8px' }}>⟳</span>
+                {existing ? 'Saving...' : 'Adding...'}
+              </>
+            ) : (
+              existing ? '✓ Save Changes' : '+ Add Task'
+            )}
           </Button>
         </div>
       </div>

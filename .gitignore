@@ -92,3 +92,10 @@ lerna-debug.log*
 # OS
 Thumbs.db
 
+# Docker later i will remove it
+.dockerignore
+Dockerfile
+docker-compose.yml
+Dockerfile.dev
+docker-compose.dev.yml
+nginx.conf

@@ -40,32 +40,36 @@ export default function Calendar() {
 
   const selectedDateStr = format(selectedDate, 'yyyy-MM-dd');
 
-  useEffect(() => {
-    const fetchTasksForDate = async () => {
-      setLoadingTasks(true);
-      try {
-        const token = localStorage.getItem(config.auth.tokenKey);
-        const response = await fetch(`${config.api.baseURL}/tasks/by-date/${selectedDateStr}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
+  const fetchTasksForDate = async () => {
+    setLoadingTasks(true);
+    try {
+      const token = localStorage.getItem(config.auth.tokenKey);
+      const response = await fetch(`${config.api.baseURL}/tasks/by-date/${selectedDateStr}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      
+      if (response.ok) {
+        const result = await response.json();
 
-          // Wait 500ms before showing results
-          await new Promise(resolve => setTimeout(resolve, 500));
+        // Wait 500ms before showing results
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-          setSelectedTasks(result.data.tasks.sort((a, b) => 
-            new Date(a.scheduledTime) - new Date(b.scheduledTime)
-          ));
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        setSelectedTasks([]);
-      } finally {
-        setLoadingTasks(false);
+        setSelectedTasks(result.data.tasks.map(task => ({
+          ...task,
+          id: task._id || task.id,
+        })).sort((a, b) => 
+          new Date(a.scheduledTime) - new Date(b.scheduledTime)
+        ));
       }
-    };
+    } catch (error) {
+      console.error('Error:', error);
+      setSelectedTasks([]);
+    } finally {
+      setLoadingTasks(false);
+    }
+  };
+
+  useEffect(() => {
     fetchTasksForDate();
   }, [selectedDateStr]);
 
@@ -205,7 +209,7 @@ export default function Calendar() {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {selectedTasks.map(task => (
-                <TaskCard key={task.id} task={task} compact />
+                <TaskCard key={task._id || task.id} task={task} compact onUpdate={fetchTasksForDate} />
               ))}
             </div>
           )}

@@ -4,11 +4,13 @@ import { useApp } from '../context/AppContext';
 import { Badge, Button, Modal, Input } from './UI';
 import { format } from 'date-fns';
 
-export default function TaskCard({ task, compact = false }) {
+export default function TaskCard({ task, compact = false, onUpdate }) {
   const { colors, completeTask, delayTask, completeDelayedTask, deleteTask, PRIORITY_COLORS } = useApp();
   const [showDelayModal, setShowDelayModal] = useState(false);
   const [delayReason, setDelayReason] = useState('');
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const navigate = useNavigate();
 
   const priorityColor = PRIORITY_COLORS[task.priority]?.dark || colors.textSub;
@@ -35,19 +37,39 @@ export default function TaskCard({ task, compact = false }) {
     return now >= start && now <= end;
   };
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (task.delayed && !task.completed) {
       setShowDelayModal(true);
     } else {
-      completeTask(task.id);
+      setIsCompleting(true);
+      await completeTask(task.id);
+      setTimeout(() => {
+        setIsCompleting(false);
+        if (onUpdate) onUpdate();
+      }, 500);
     }
   };
 
-  const handleDelayComplete = () => {
+  const handleDelayComplete = async () => {
     if (!delayReason.trim()) return;
-    completeDelayedTask(task.id, delayReason.trim());
+    setIsCompleting(true);
+    await completeDelayedTask(task.id, delayReason.trim());
     setShowDelayModal(false);
     setDelayReason('');
+    setTimeout(() => {
+      setIsCompleting(false);
+      if (onUpdate) onUpdate();
+    }, 500);
+  };
+
+  const handleDelete = async () => {
+    setIsDeleting(true);
+    await deleteTask(task.id);
+    setTimeout(() => {
+      setIsDeleting(false);
+      setShowConfirm(false);
+      if (onUpdate) onUpdate();
+    }, 500);
   };
 
   const statusColor = task.completed ? colors.success
@@ -65,6 +87,48 @@ export default function TaskCard({ task, compact = false }) {
         display: 'flex', gap: '16px', alignItems: 'flex-start',
         position: 'relative', overflow: 'hidden',
       }}>
+        {/* Skeleton Loading Overlay */}
+        {(isCompleting || isDeleting) && (
+          <div style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: colors.surface,
+            opacity: 0.95,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 10,
+            borderRadius: '14px',
+          }}>
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '12px',
+              width: '100%',
+              padding: '20px',
+            }}>
+              <div style={{
+                height: '20px',
+                background: `linear-gradient(90deg, ${colors.surfaceAlt} 25%, ${colors.border} 50%, ${colors.surfaceAlt} 75%)`,
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.5s infinite',
+                borderRadius: '6px',
+                width: '70%',
+              }} />
+              <div style={{
+                height: '16px',
+                background: `linear-gradient(90deg, ${colors.surfaceAlt} 25%, ${colors.border} 50%, ${colors.surfaceAlt} 75%)`,
+                backgroundSize: '200% 100%',
+                animation: 'shimmer 1.5s infinite',
+                borderRadius: '6px',
+                width: '50%',
+              }} />
+            </div>
+          </div>
+        )}
         {/* Live pulse indicator */}
         {isNow() && !task.completed && (
           <div style={{
@@ -165,13 +229,22 @@ export default function TaskCard({ task, compact = false }) {
       </Modal>
 
       {/* Delete Confirm */}
-      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)} title="Delete Task" width="360px">
+      <Modal isOpen={showConfirm} onClose={() => !isDeleting && setShowConfirm(false)} title="Delete Task" width="360px">
         <p style={{ fontSize: '14px', color: colors.textSub, marginBottom: '20px' }}>
           Are you sure you want to delete "<strong>{task.title}</strong>"? This cannot be undone.
         </p>
         <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-          <Button variant="ghost" onClick={() => setShowConfirm(false)}>Cancel</Button>
-          <Button variant="danger" onClick={() => { deleteTask(task.id); setShowConfirm(false); }}>Delete</Button>
+          <Button variant="ghost" onClick={() => setShowConfirm(false)} disabled={isDeleting}>Cancel</Button>
+          <Button variant="danger" onClick={handleDelete} disabled={isDeleting}>
+            {isDeleting ? (
+              <>
+                <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite', marginRight: '6px' }}>⟳</span>
+                Deleting...
+              </>
+            ) : (
+              'Delete'
+            )}
+          </Button>
         </div>
       </Modal>
     </>
