@@ -18,7 +18,11 @@ export default function Home() {
   const { colors, tasks } = useApp();
   const navigate = useNavigate();
   const now = new Date();
-  const todayStr = now.toISOString().slice(0, 10);
+  console.log("now : " , now)
+  // const todayStr = now.toISOString().slice(0, 10);
+  // Use local date components to build YYYY-MM-DD string
+  const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  console.log("todayStr : ", todayStr)
 
   const todayTasks = useMemo(() =>
     tasks.filter(t => t.scheduledDate === todayStr)
@@ -47,6 +51,8 @@ export default function Home() {
       return start > now;
     });
   }, [todayTasks, now, currentTask]);
+
+  console.log("next Task : ", nextTask);
 
   const allDelayed = tasks.filter(t => t.delayed && !t.completed);
 

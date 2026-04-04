@@ -52,6 +52,8 @@ export default function TaskForm({ existing }) {
         scheduledTime: form.scheduledTime,
         duration: parseInt(form.duration),
         notes: form.notes.trim(),
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        timezoneOffset : parseInt((new Date().getTimezoneOffset()))  
       };
       if (existing) { await updateTask(existing.id, payload); }
       else { await addTask(payload); }

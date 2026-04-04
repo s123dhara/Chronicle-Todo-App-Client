@@ -8,7 +8,9 @@ import TaskCard from '../components/TaskCard';
 export default function Tasks() {
   const { colors, tasks, CATEGORIES } = useApp();
   const navigate = useNavigate();
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 10));
+  // const [filterDate, setFilterDate] = useState(new Date().toISOString().slice(0, 10));
+  const now = new Date();
+  const [filterDate, setFilterDate] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`);
   const [filterCategory, setFilterCategory] = useState('All');
   const [filterPriority, setFilterPriority] = useState('All');
   const [filterStatus, setFilterStatus] = useState('All');

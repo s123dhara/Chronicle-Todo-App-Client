@@ -200,6 +200,10 @@ export function AppProvider({ children }) {
       if (!t.completed && !t.delayed && t.scheduledTime) {
         const end = new Date(t.scheduledTime);
         end.setMinutes(end.getMinutes() + (t.duration || 30));
+        console.log(`t: ${t.title}, end: ${end}, now: ${now}`)
+        console.log(
+          `Delayed? ${!t.completed && !t.delayed && t.scheduledTime && end < now}`
+        )
         if (end < now) return { ...t, delayed: true };
       }
       return t;
